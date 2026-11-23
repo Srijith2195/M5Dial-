@@ -23,6 +23,18 @@
 #include "../app_wifi_scan/app_wifi_scan.h"
 #include "../app_more_menu/app_more_menu.h"
 #include "../app_ble_server/app_ble_server.h"
+#include "../app_pc_control/app_pc_control.h"
+#include "../app_dice/app_dice.h"
+#include "../app_sound/app_sound.h"
+#include "../app_stopwatch/app_stopwatch.h"
+#include "../app_timer/app_timer.h"
+#include "../app_flashlight/app_flashlight.h"
+#include "../app_calendar/app_calendar.h"
+#include "../app_breakout/app_breakout.h"
+#include "../app_coin_flip/app_coin_flip.h"
+#include "../app_omnitrix/app_omnitrix.h"
+#include "../app_virtual_dog/app_virtual_dog.h"
+#include "../app_vault/app_vault.h"
 
 
 

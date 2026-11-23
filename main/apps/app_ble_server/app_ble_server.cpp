@@ -88,6 +88,34 @@ void BLE_Server::onRunning()
     }
 
 
+    /* Smartwatch Touch Handling in BLE_Server */
+    if (_data.hal != nullptr && _data.hal->tp.isTouched()) {
+        _data.hal->tp.update();
+        auto pt = _data.hal->tp.getTouchPointBuffer();
+        int start_x = pt.x;
+        int start_y = pt.y;
+        int last_x = pt.x;
+        int last_y = pt.y;
+        uint32_t start_time = millis();
+
+        while (_data.hal->tp.isTouched()) {
+            _data.hal->tp.update();
+            last_x = _data.hal->tp.getTouchPointBuffer().x;
+            last_y = _data.hal->tp.getTouchPointBuffer().y;
+            delay(10);
+        }
+
+        int dx = last_x - start_x;
+        int dy = last_y - start_y;
+
+        // Universal Smartwatch Swipe Left OR Swipe Right -> Navigate Back to Launcher
+        if ((dx < -40 && abs(dy) < 55) || (dx > 40 && abs(dy) < 55) || (start_y > 200 && abs(dx) < 50)) {
+            _data.hal->buzz.tone(3000, 30);
+            destroyApp();
+            return;
+        }
+    }
+
     /* If button pressed */
     if (!_data.hal->encoder.btn.read())
     {

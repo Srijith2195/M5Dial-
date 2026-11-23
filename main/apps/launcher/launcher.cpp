@@ -42,7 +42,7 @@ void Launcher::_menu_init()
     int a = 120;
     int b = 120;
     int r = 60;
-    int n = 10;
+    int n = ICON_NUM;
     int x;
     int y;
     for (int i = 0; i < n; i++)
@@ -74,7 +74,7 @@ void Launcher::_icon_list_init()
     int a = 120;
     int b = 120;
     int r = 190 / 2;
-    int n = 10;
+    int n = ICON_NUM;
     int x;
     int y;
     for (int i = 0; i < icon_list.size(); i++)
@@ -104,7 +104,7 @@ void Launcher::_launcher_loop()
     /* If scrolled */
     if (_data.hal->encoder.wasMoved(true))
     {
-        // printf("%d\n", _data.hal->encoder.getPosition());
+        _data.hal->buzz.tone(3600, 12);
         if (_data.hal->encoder.getDirection() < 1)
             _data.menu->goNext();
         else 
@@ -136,38 +136,80 @@ void Launcher::_launcher_loop()
         _app_open_callback(_data.menu->getSelector()->getTargetItem());
     }
 
-    /* If touched */
+    /* Smartwatch Touch Interaction in Launcher */
     if (_data.hal->tp.isTouched())
     {
         _data.hal->tp.update();
+        auto pt = _data.hal->tp.getTouchPointBuffer();
+        int start_x = pt.x;
+        int start_y = pt.y;
+        int last_x = pt.x;
+        int last_y = pt.y;
+        uint32_t start_time = millis();
 
-        // printf("%d %d\n", _data.hal->tp.getTouchPointBuffer().x, _data.hal->tp.getTouchPointBuffer().y);
-        // return;
-
-        /* Check if in the center circle (r = 50) */
-        int x = _data.hal->tp.getTouchPointBuffer().x - 120;
-        int y = _data.hal->tp.getTouchPointBuffer().y - 120;
-        if ((x * x + y * y) > (50 * 50))
+        while (_data.hal->tp.isTouched())
         {
-            // printf("no\n");
+            _data.hal->tp.update();
+            last_x = _data.hal->tp.getTouchPointBuffer().x;
+            last_y = _data.hal->tp.getTouchPointBuffer().y;
+            _data.menu->update(millis());
+            _canvas_update();
+            delay(10);
+        }
+
+        int dx = last_x - start_x;
+        int dy = last_y - start_y;
+        uint32_t duration = millis() - start_time;
+
+        // 1. Swipe Left / Right to rotate app dial
+        if (dx < -40 && abs(dy) < 55)
+        {
+            _data.hal->buzz.tone(3600, 10);
+            _data.menu->goNext();
             return;
         }
-        // printf("yes\n");
-
-        /* Call button pressed callback */
-        HAL::HAL::_encoder_button_pressed_callback(nullptr, _data.hal);
-
-
-        if (_data.menu->getSelector()->isAnimFinished())
+        else if (dx > 40 && abs(dy) < 55)
         {
-            /* App open callback */
-            _app_open_callback(_data.menu->getSelector()->getTargetItem());
+            _data.hal->buzz.tone(3600, 10);
+            _data.menu->goLast();
+            return;
+        }
 
-            /* Wait until released */
-            while (_data.hal->tp.isTouched())
+        // 2. Tap detection
+        if (abs(dx) <= 25 && abs(dy) <= 25 && duration < 600)
+        {
+            // Check if user tapped directly on one of the circular app icons around the rim
+            int closest_icon = -1;
+            int min_dist_sq = 32 * 32;
+            for (int i = 0; i < icon_list.size(); i++)
             {
-                _data.menu->update(millis());
-                _canvas_update();
+                int idx_dx = start_x - icon_list[i].x;
+                int idx_dy = start_y - icon_list[i].y;
+                int dist_sq = idx_dx * idx_dx + idx_dy * idx_dy;
+                if (dist_sq < min_dist_sq)
+                {
+                    min_dist_sq = dist_sq;
+                    closest_icon = i;
+                }
+            }
+
+            if (closest_icon >= 0)
+            {
+                _data.hal->buzz.tone(4200, 15);
+                _data.menu->getSelector()->goToItem(closest_icon);
+                _app_open_callback(closest_icon);
+                return;
+            }
+
+            // Check if tapped inside center circle (r <= 50)
+            int cx = start_x - 120;
+            int cy = start_y - 120;
+            if ((cx * cx + cy * cy) <= (50 * 50))
+            {
+                _data.hal->buzz.tone(4200, 15);
+                HAL::HAL::_encoder_button_pressed_callback(nullptr, _data.hal);
+                _app_open_callback(_data.menu->getSelector()->getTargetItem());
+                return;
             }
         }
     }
@@ -187,7 +229,7 @@ void Launcher::_app_open_callback(uint8_t selectedNum)
 
     /* Special color for app more menu */
     uint32_t theme_color = 0;
-    if (selectedNum != 7)
+    if (selectedNum != (ICON_NUM - 1))
         theme_color = icon_list[selectedNum].color;
     else
         theme_color = 0;
@@ -273,27 +315,39 @@ void Launcher::_app_open_callback(uint8_t selectedNum)
     switch (selectedNum)
     {
         case 0:
-            app_ptr = new MOONCAKE::USER_APP::LCD_Test;
+            app_ptr = new MOONCAKE::USER_APP::OmnitrixApp;
             break;
         case 1:
-            app_ptr = new MOONCAKE::USER_APP::RTC_Test;
+            app_ptr = new MOONCAKE::USER_APP::PC_Control;
             break;
         case 2:
-            app_ptr = new MOONCAKE::USER_APP::RFID_Test;
+            app_ptr = new MOONCAKE::USER_APP::StopwatchApp;
             break;
         case 3:
-            app_ptr = new MOONCAKE::USER_APP::Set_Brightness;
+            app_ptr = new MOONCAKE::USER_APP::TimerApp;
             break;
         case 4:
-            app_ptr = new MOONCAKE::USER_APP::WiFi_Scan;
+            app_ptr = new MOONCAKE::USER_APP::FlashlightApp;
             break;
         case 5:
-            app_ptr = new MOONCAKE::USER_APP::BLE_Server;
+            app_ptr = new MOONCAKE::USER_APP::LCD_Test;
             break;
         case 6:
-            app_ptr = new MOONCAKE::USER_APP::VideoShit;
+            app_ptr = new MOONCAKE::USER_APP::BreakoutApp;
             break;
         case 7:
+            app_ptr = new MOONCAKE::USER_APP::Dice;
+            break;
+        case 8:
+            app_ptr = new MOONCAKE::USER_APP::CoinFlipApp;
+            break;
+        case 9:
+            app_ptr = new MOONCAKE::USER_APP::VirtualDogApp;
+            break;
+        case 10:
+            app_ptr = new MOONCAKE::USER_APP::VaultApp;
+            break;
+        case 11:
             app_ptr = new MOONCAKE::USER_APP::MoreMenu;
             break;
         default:
@@ -353,12 +407,64 @@ void Launcher::_simple_app_manager(MOONCAKE::APP_BASE* app)
             break;
         }
 
-        // if (_data.hal->encoder.btn.pressed())
-        // {
-        //     /* Hold until button release */
-        //     while (!_data.hal->encoder.btn.read());
-        //     break;
-        // }
+        bool is_smart_app = (app != nullptr &&
+            (app->getAppName() == "Draw Pad" ||
+             app->getAppName() == "PC Control" ||
+             app->getAppName() == "Dice" ||
+             app->getAppName() == "Sound Settings" ||
+             app->getAppName() == "Stopwatch" ||
+             app->getAppName() == "Timer" ||
+             app->getAppName() == "Flashlight" ||
+             app->getAppName() == "Calendar" ||
+             app->getAppName() == "Breakout" ||
+             app->getAppName() == "Coin Flip" ||
+             app->getAppName() == "Omnitrix" ||
+             app->getAppName() == "Virtual Dog" ||
+             app->getAppName() == "Secret Msg" ||
+             app->getAppName() == "Vault" ||
+             app->getAppName() == "MoreMenu"));
+
+        /* Smartwatch Universal Exit Fallback for legacy apps: dial button long-press (>800ms) */
+        if (!is_smart_app && !_data.hal->encoder.btn.read())
+        {
+            uint32_t press_start = millis();
+            while (!_data.hal->encoder.btn.read())
+            {
+                delay(10);
+                if (millis() - press_start > 800)
+                {
+                    _data.hal->buzz.tone(2800, 30);
+                    while (!_data.hal->encoder.btn.read()) delay(10);
+                    app->destroyApp();
+                    break;
+                }
+            }
+        }
+
+        /* Smartwatch Universal Touch Navigation Fallback for apps that don't handle touch */
+        if (!is_smart_app && _data.hal->tp.isTouched())
+        {
+            _data.hal->tp.update();
+            auto pt = _data.hal->tp.getTouchPointBuffer();
+            int s_x = pt.x, s_y = pt.y, l_x = pt.x, l_y = pt.y;
+            uint32_t t0 = millis();
+            while (_data.hal->tp.isTouched())
+            {
+                _data.hal->tp.update();
+                l_x = _data.hal->tp.getTouchPointBuffer().x;
+                l_y = _data.hal->tp.getTouchPointBuffer().y;
+                delay(10);
+            }
+            int t_dx = l_x - s_x;
+            int t_dy = l_y - s_y;
+
+            // Universal Smartwatch Swipe Left ONLY -> Navigate Back to Launcher
+            if (t_dx < -40 && abs(t_dy) < 55)
+            {
+                _data.hal->buzz.tone(3000, 30);
+                app->destroyApp();
+            }
+        }
     }
 }
 

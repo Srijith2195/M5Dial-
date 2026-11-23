@@ -1,18 +1,12 @@
 /**
  * @file app_lcd_test.h
- * @author Forairaaaaa
- * @brief 
- * @version 0.1
- * @date 2023-07-27
- * 
- * @copyright Copyright (c) 2023
- * 
+ * @brief Smooth Freehand Drawing Pad for M5Dial
+ * @version 0.2
+ * @date 2026-11-17
  */
 #pragma once
 #include "../app.h"
 #include "../../hal/hal.h"
-#include "gui/gui_lcd_test.h"
-
 
 namespace MOONCAKE
 {
@@ -23,41 +17,32 @@ namespace MOONCAKE
             struct Data_t
             {
                 HAL::HAL* hal = nullptr;
+                int color_index = 0;
+                uint32_t badge_until = 0;
+                uint32_t hint_until = 0;
             };
         }
 
         class LCD_Test : public APP_BASE
         {
             private:
-                const char* _tag = "lcd";
+                const char* _tag = "draw";
 
                 LCD_TEST::Data_t _data;
-                GUI_LCD_TEST _gui;
-                
+
+                void _draw_stroke(int x0, int y0, int x1, int y1, uint32_t color, int radius);
+                void _clear_canvas();
+                void _show_color_badge();
+                void _restore_badge_area();
+                void _clear_hint();
 
             public:
-                
-                /**
-                 * @brief Get gui pointer for basic settings 
-                 * 
-                 * @return GUI_Base* 
-                 */
-                GUI_Base* getGui() override { return &_gui; }
+                GUI_Base* getGui() override { return nullptr; }
 
-
-                /**
-                 * @brief Lifecycle callbacks for derived to override
-                 * 
-                 */
-                /* Setup App configs, called when App "install()" */
-                void onSetup();
-
-                /* Life cycle */
-                void onCreate();
-                void onRunning();
-                void onDestroy();
+                void onSetup() override;
+                void onCreate() override;
+                void onRunning() override;
+                void onDestroy() override;
         };
-
     }
 }
-

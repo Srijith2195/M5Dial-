@@ -45,8 +45,11 @@ void FactoryTest::_lcd_test()
     MOONCAKE::USER_APP::LCD_Test lcd_test;
     LGFX_Sprite empty;
 
-    lcd_test.getGui()->setThemeColor(TFT_BLACK);
-    lcd_test.getGui()->init(_data.hal->canvas, &empty);
+    if (lcd_test.getGui() != nullptr)
+    {
+        lcd_test.getGui()->setThemeColor(TFT_BLACK);
+        lcd_test.getGui()->init(_data.hal->canvas, &empty);
+    }
 
 
 

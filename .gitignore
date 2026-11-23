@@ -3,3 +3,42 @@ build
 managed_components
 
 /sdkconfig.old
+
+# Temporary backup files and inspection logs
+*.bak
+*.bak.*
+*.before-*
+*.zip
+*_backup/
+*backup*/
+*inspection*.txt
+PC-Control-next-step.txt
+pc-control-build.txt
+Patch-M5Dial-PCControl.ps1
+
+# Temporary design/test crops
+preview_*.png
+test_*.png
+adult_*.png
+pup_*.png
+puppy_isolated.png
+clean_*.png
+dog_f*.png
+hi_*.png
+hi_dials/
+extracted_dials/
+extracted_ref/
+processed_dials/
+processed_dials_240/
+user_*.png
+row2_left.png
+waybig_test.png
+
+# Local secrets and configuration
+.env
+*.env
+pc_companion/.env
+
+# Python cache
+__pycache__/
+*.pyc

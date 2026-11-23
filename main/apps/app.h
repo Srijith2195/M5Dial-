@@ -54,18 +54,6 @@ namespace MOONCAKE {
             inline void setAllowBgRunning(bool allow) { _allow_bg_running = allow; }
 
             /**
-             * @brief Close App 
-             * 
-             */
-            inline void closeApp() { _go_close = true; }
-
-            /**
-             * @brief Destroy App, not going background
-             * 
-             */
-            inline void destroyApp() { _go_destroy = true; }
-
-            /**
              * @brief Get user data
              * 
              * @return void* 
@@ -74,6 +62,9 @@ namespace MOONCAKE {
 
 
         public:
+            inline void destroyApp() { _go_destroy = true; }
+            inline void closeApp() { _go_close = true; }
+
             APP_BASE() :
                 _name(""),
                 _user_data(nullptr),

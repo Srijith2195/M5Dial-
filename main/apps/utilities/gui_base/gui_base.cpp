@@ -13,17 +13,7 @@
 
 void GUI_Base::_draw_quit_button(const int& buttonColor)
 {
-    // int button_width = 4 * 14;
-    // int button_height = 22;
-    // int button_x = 120;
-    // int button_y = 120 + 98;
-    // _canvas->fillSmoothRoundRect(button_x - button_width / 2, button_y - button_height / 2, button_width, button_height, 10, buttonColor);
-    // _canvas->fillTriangle(button_x - 10, button_y, button_x + 10, button_y, button_x, button_y + 16, buttonColor);
-    // _canvas->setTextColor(_theme_color);
-    // _canvas->drawCenterString("Quit", button_x, button_y - 12);
-
-    _canvas->setTextColor(buttonColor);
-    _canvas->drawCenterString("<", _canvas_half_width, 215);
+    // Clean smartwatch UI: no on-screen back button. Universal swipe left/right navigates back.
 }
 
 

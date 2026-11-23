@@ -156,7 +156,7 @@ namespace lgfx
       static constexpr const uint8_t rgb332sig_tbl[] = { 1, 0, 1, 0, 1, 2, 3, 4, 2, 3, 4, 5, 6, 5, 6, 7 };
       static constexpr const uint8_t rgb565sig_tbl[] = { 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7 };
       auto tbl = (pixel_bytes == 2) ? rgb565sig_tbl : rgb332sig_tbl;
-      auto sigs = lcd_periph_signals.panels[_cfg.port];
+      auto sigs = lcd_periph_rgb_signals.panels[_cfg.port];
       for (size_t i = 0; i < 16; i++) {
         _gpio_pin_sig(_cfg.pin_data[i], sigs.data_sigs[tbl[i]]);
       }
@@ -166,7 +166,7 @@ namespace lgfx
       _gpio_pin_sig(_cfg.pin_pclk, sigs.pclk_sig);
     }
 
-    // periph_module_enable(lcd_periph_signals.panels[_cfg.port].module);
+    // periph_module_enable(lcd_periph_rgb_signals.panels[_cfg.port].module);
     _dma_ch = search_dma_out_ch(SOC_GDMA_TRIG_PERIPH_LCD0);
     if (_dma_ch < 0)
     {
@@ -304,7 +304,7 @@ namespace lgfx
     dev->lc_dma_int_ena.val = 1;
 
     int isr_flags = ESP_INTR_FLAG_INTRDISABLED | ESP_INTR_FLAG_SHARED;
-    esp_intr_alloc_intrstatus(lcd_periph_signals.panels[_cfg.port].irq_id, isr_flags,
+    esp_intr_alloc_intrstatus(lcd_periph_rgb_signals.panels[_cfg.port].irq_id, isr_flags,
                                    (uint32_t)&dev->lc_dma_int_st,
                                     LCD_LL_EVENT_VSYNC_END, lcd_default_isr_handler, this, &_intr_handle);
     esp_intr_enable(_intr_handle);

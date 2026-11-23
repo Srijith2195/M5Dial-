@@ -312,7 +312,7 @@ namespace lgfx
         buscfg.max_transfer_sz = 1;
         buscfg.flags = SPICOMMON_BUSFLAG_MASTER;
         buscfg.intr_flags = 0;
-        buscfg.isr_cpu_id = INTR_CPU_ID_AUTO;
+        buscfg.isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO;
 
         if (ESP_OK != spi_bus_initialize(static_cast<spi_host_device_t>(spi_host), &buscfg, dma_channel))
         {
@@ -482,7 +482,7 @@ namespace lgfx
 #if __has_include(<soc/i2c_periph.h>)
     static periph_module_t getPeriphModule(int num)
     {
-      return i2c_periph_signal[num].module;
+      return num == 0 ? PERIPH_I2C0_MODULE : PERIPH_I2C1_MODULE;
     }
 #else
     static periph_module_t getPeriphModule(int num)
@@ -650,7 +650,7 @@ namespace lgfx
   || (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 1) && ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 2, 0))
       (&dev->comd[0])[index].val = cmd_val;
  #else
-      (&dev->comd0)[index].val = cmd_val;
+      dev->comd[index].val = cmd_val;
  #endif
 #else
       dev->command[index].val = cmd_val;

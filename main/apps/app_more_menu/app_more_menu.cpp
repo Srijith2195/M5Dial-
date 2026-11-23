@@ -38,26 +38,23 @@ void MoreMenu::_create_menu()
 
 
     /* Add menu item tag */
-    int text_width = 12;
-    int text_height = 24;
-    int text_size = 1;
+    int item_h = 32;
+    int item_w = 176;
+    int item_x = (240 - item_w) / 2;
     std::vector<std::string> tag_list = {
-        "Quit",
-        "Power Off",
+        "Secret Msg",
+        "Virtual Dog",
+        "Sound Settings",
+        "Toggle Sound",
+        "RFID Scanner",
+        "Wi-Fi Scanner",
+        "BLE Server",
+        "RTC Clock",
+        "Brightness Set",
         "LVGL Widgets",
         "LVGL Benchmark",
-        "LVGL Stress",
-        "???",
-        ":):):):)",
-        "This",
-        "Is",
-        "A",
-        "Really",
-        "Really",
-        "Really",
-        "Really",
-        "Long",
-        "List"
+        "Power Off",
+        "Quit"
     };
 
 
@@ -66,10 +63,10 @@ void MoreMenu::_create_menu()
     {
         _data.menu->getMenu()->addItem(
             tag_list[i].c_str(),
-            24,
-            10 + (text_height + 2) * text_size * i,
-            text_width * text_size * tag_list[i].size(),
-            text_height * text_size
+            item_x,
+            10 + item_h * i,
+            item_w,
+            item_h
         );
     }
 }
@@ -79,12 +76,11 @@ void MoreMenu::_menu_loop()
 {
     _data.menu->update(millis());
     _canvas_update();
-    // delay(5);
+    delay(10);
 
     /* If scrolled */
     if (_data.hal->encoder.wasMoved(true))
     {
-        // printf("%d\n", _data.hal->encoder.getPosition());
         if (_data.hal->encoder.getDirection() < 1)
             _data.menu->goNext();
         else 
@@ -95,23 +91,84 @@ void MoreMenu::_menu_loop()
     if (!_data.hal->encoder.btn.read())
     {
         _data.menu->getSelector()->pressed();
-        /* Hold until button release */
         while (!_data.hal->encoder.btn.read())
         {
             _data.menu->update(millis());
             _canvas_update();
+            delay(10);
         }
 
         _data.menu->getSelector()->released();
-        /* Hold until anim finish */
         while (!_data.menu->getSelector()->isAnimFinished())
         {
             _data.menu->update(millis());
             _canvas_update();
+            delay(10);
         }
 
         /* App open callback */
         _item_selected_callback(_data.menu->getSelector()->getTargetItem());
+        return;
+    }
+
+    /* Smartwatch Touch Navigation in MoreMenu */
+    if (_data.hal->tp.isTouched())
+    {
+        _data.hal->tp.update();
+        auto pt = _data.hal->tp.getTouchPointBuffer();
+        int start_x = pt.x;
+        int start_y = pt.y;
+        int last_x = pt.x;
+        int last_y = pt.y;
+        uint32_t start_time = millis();
+
+        while (_data.hal->tp.isTouched())
+        {
+            _data.hal->tp.update();
+            last_x = _data.hal->tp.getTouchPointBuffer().x;
+            last_y = _data.hal->tp.getTouchPointBuffer().y;
+            _data.menu->update(millis());
+            _canvas_update();
+            delay(10);
+        }
+
+        int dx = last_x - start_x;
+        int dy = last_y - start_y;
+        uint32_t duration = millis() - start_time;
+
+        // Swipe Left -> Navigate Back to Launcher
+        if (dx < -40 && abs(dy) < 55)
+        {
+            _data.hal->buzz.tone(3000, 30);
+            destroyApp();
+            return;
+        }
+
+        // 2. Swipe Up / Down -> Smooth Scroll
+        if (dy < -35 && abs(dx) < 50)
+        {
+            _data.hal->buzz.tone(3600, 10);
+            _data.menu->goNext();
+        }
+        else if (dy > 35 && abs(dx) < 50)
+        {
+            _data.hal->buzz.tone(3600, 10);
+            _data.menu->goLast();
+        }
+        // 3. Tap -> Direct Select
+        else if (abs(dx) <= 20 && abs(dy) <= 20 && duration < 500)
+        {
+            _data.hal->buzz.tone(4000, 15);
+            // If tapped top left corner, treat as Back
+            if (start_x < 65 && start_y < 45)
+            {
+                destroyApp();
+                return;
+            }
+
+            _item_selected_callback(_data.menu->getSelector()->getTargetItem());
+            return;
+        }
     }
 }
 

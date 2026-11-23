@@ -106,18 +106,15 @@ namespace HAL
         /* Set button pressed callback */
         // encoder.btn.setPressedCallback(_encoder_button_pressed_callback, this);
         encoder.btn.setPin(HAL_PIN_PWR_WAKE_UP);
+        encoder.btn.begin();
         encoder.btn.setPressedCallback(_encoder_button_pressed_callback, this);
     }
 
     void HAL::_buzz_init()
     {
         /* Buzz */
-        // buzz.init(3);
         buzz.init(HAL_PIN_BUZZER);
-
-        // buzz.tone(4000, 50);
-        // delay(100);
-        // buzz.tone(4000, 50);
+        buzz.tone(3000, 50);
     }
 
     void HAL::init()

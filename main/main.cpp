@@ -15,11 +15,19 @@
 #include "apps/app.h"
 #include "apps/launcher/launcher.h"
 #include "apps/app_factory_test/app_factory_test.h"
+#include "nvs_flash.h"
 
 #define delay(ms) vTaskDelay(pdMS_TO_TICKS(ms))
 
 extern "C" void app_main(void)
 {
+    /* Initialize NVS */
+    esp_err_t nvs_err = nvs_flash_init();
+    if (nvs_err == ESP_ERR_NVS_NO_FREE_PAGES || nvs_err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        nvs_flash_erase();
+        nvs_flash_init();
+    }
+
     HAL::HAL hal;
 
     /* Hardware init */
